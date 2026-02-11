@@ -17,9 +17,10 @@ actual class NotificationManager actual constructor() {
             setTitle(title)
             setBody(message)
             setSound(UNNotificationSound.defaultSound)
+            // Ajouter une catégorie pour identifier la notification
+            setCategoryIdentifier("DETAILS_CATEGORY")
         }
 
-        // Déclencher immédiatement (0.1 seconde)
         val trigger = UNTimeIntervalNotificationTrigger.triggerWithTimeInterval(
             timeInterval = 0.1,
             repeats = false
@@ -45,20 +46,17 @@ actual class NotificationManager actual constructor() {
     actual fun requestPermission(onResult: (Boolean) -> Unit) {
         val center = UNUserNotificationCenter.currentNotificationCenter()
 
-        // Vérifier d'abord si on a déjà la permission
         center.getNotificationSettingsWithCompletionHandler { settings ->
             if (settings != null) {
                 val authStatus = settings.authorizationStatus
 
-                // Si déjà autorisé, retourner true
-                if (authStatus == 2L) { // UNAuthorizationStatusAuthorized = 2
+                if (authStatus == 2L) {
                     println("✅ Permission iOS déjà accordée")
                     onResult(true)
                     return@getNotificationSettingsWithCompletionHandler
                 }
             }
 
-            // Sinon, demander la permission
             center.requestAuthorizationWithOptions(
                 options = UNAuthorizationOptionAlert or
                         UNAuthorizationOptionSound or
@@ -74,4 +72,9 @@ actual class NotificationManager actual constructor() {
             }
         }
     }
+}
+
+// Objet pour gérer l'état du deep linking iOS
+object IOSNotificationState {
+    var shouldOpenDetails: Boolean = false
 }

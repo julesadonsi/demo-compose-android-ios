@@ -3,7 +3,9 @@ package com.usetech.demo1
 import android.Manifest
 import android.app.NotificationChannel
 import android.app.NotificationManager as AndroidNotificationManager
+import android.app.PendingIntent
 import android.content.Context
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
 import androidx.core.app.NotificationCompat
@@ -26,6 +28,19 @@ actual class NotificationManager actual constructor() {
     actual fun sendNotification(title: String, message: String) {
         val context = getContext()
 
+        // Intent pour ouvrir l'app avec un flag spécial
+        val intent = Intent(context, MainActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+            putExtra("OPEN_DETAILS", true) // Flag pour savoir qu'on vient d'une notification
+        }
+
+        val pendingIntent = PendingIntent.getActivity(
+            context,
+            0,
+            intent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+
         val notification = NotificationCompat.Builder(context, channelId)
             .setSmallIcon(android.R.drawable.ic_dialog_info)
             .setContentTitle(title)
@@ -33,6 +48,7 @@ actual class NotificationManager actual constructor() {
             .setPriority(NotificationCompat.PRIORITY_HIGH)
             .setAutoCancel(true)
             .setDefaults(NotificationCompat.DEFAULT_ALL)
+            .setContentIntent(pendingIntent) // Ajouter l'intent
             .build()
 
         try {
@@ -54,21 +70,7 @@ actual class NotificationManager actual constructor() {
 
             onResult(hasPermission)
         } else {
-            // Pas besoin de permission pour Android < 13
             onResult(true)
-        }
-    }
-
-    // Fonction pour vérifier si la permission est accordée
-    fun hasPermission(): Boolean {
-        val context = getContext()
-        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            ContextCompat.checkSelfPermission(
-                context,
-                Manifest.permission.POST_NOTIFICATIONS
-            ) == PackageManager.PERMISSION_GRANTED
-        } else {
-            true
         }
     }
 
@@ -92,5 +94,14 @@ actual class NotificationManager actual constructor() {
 }
 
 object AndroidApp {
-    lateinit var appContext: Context
+    private var _appContext: Context? = null
+
+    val appContext: Context
+        get() = _appContext ?: error("Context not initialized")
+
+    fun init(context: Context) {
+        if (_appContext == null) {
+            _appContext = context.applicationContext
+        }
+    }
 }

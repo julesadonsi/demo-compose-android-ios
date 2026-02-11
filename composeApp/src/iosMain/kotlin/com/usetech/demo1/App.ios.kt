@@ -14,3 +14,21 @@ actual fun RequestNotificationPermission(
         }
     }
 }
+
+@Composable
+actual fun getStartDestination(): String {
+    val shouldOpenDetails = IOSNotificationState.shouldOpenDetails
+
+    // Réinitialiser après lecture
+    LaunchedEffect(shouldOpenDetails) {
+        if (shouldOpenDetails) {
+            IOSNotificationState.shouldOpenDetails = false
+        }
+    }
+
+    return if (shouldOpenDetails) {
+        Screen.NotificationDetails.route
+    } else {
+        Screen.Home.route
+    }
+}

@@ -21,9 +21,26 @@ actual fun RequestNotificationPermission(
             launcher.launch(Manifest.permission.POST_NOTIFICATIONS)
         }
     } else {
-        // Pas besoin de permission pour Android < 13
         LaunchedEffect(Unit) {
             onPermissionResult(true)
         }
+    }
+}
+
+@Composable
+actual fun getStartDestination(): String {
+    val shouldOpenDetails by MainActivity.shouldOpenDetails
+
+    // Réinitialiser après lecture
+    LaunchedEffect(shouldOpenDetails) {
+        if (shouldOpenDetails) {
+            MainActivity.shouldOpenDetails.value = false
+        }
+    }
+
+    return if (shouldOpenDetails) {
+        Screen.NotificationDetails.route
+    } else {
+        Screen.Home.route
     }
 }
